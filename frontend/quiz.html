@@ -241,8 +241,8 @@
               Logout
             </button>
             <button type="button" onclick="if(typeof deleteAccount==='function') deleteAccount();"
-              class="flex min-h-[58px] items-center gap-4 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-5 text-base font-semibold text-rose-200 transition hover:bg-rose-500/20">
-              <span class="grid h-10 w-10 place-items-center rounded-xl bg-rose-500/10"><i
+              class="flex min-h-[58px] items-center gap-4 rounded-2xl border border-rose-400/20 bg-rose-500/5 px-5 text-base font-semibold text-rose-200 transition hover:bg-rose-500/20">
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-rose-500/5"><i
                   class="fa-solid fa-trash"></i></span>
               Delete Account
             </button>
@@ -258,8 +258,7 @@
               class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700"><i
                 class="fa-solid fa-wand-magic-sparkles"></i>AI-powered practice</span>
             <h2 class="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Test the topic you struggle right now.</h2>
-            <p class="mt-3 text-sm leading-6 text-slate-600 sm:text-base">Tell AcadAI the subject and topic you are
-              struggling with. It will create exactly 10 practice questions and show your result immediately.</p>
+            <p class="mt-3 text-sm leading-6 text-slate-600 sm:text-base">Tell AcadAI the subject and topic you want to practice. It will create exactly 5 questions, including relevant related concepts and applications, and show your result immediately.</p>
           </div>
         </section>
         <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
@@ -299,7 +298,7 @@
               class="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div><button
               id="generate-btn" type="submit"
               class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"><i
-                class="fa-solid fa-wand-magic-sparkles"></i>Generate My 10-Question Quiz</button>
+                class="fa-solid fa-wand-magic-sparkles"></i>Generate My 5-Question Quiz</button>
           </form>
         </section>
         <section id="loading-section"
@@ -307,19 +306,19 @@
           <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><i
               class="fa-solid fa-spinner fa-spin text-xl"></i></div>
           <h3 class="mt-4 font-bold">AcadAI is creating your quiz...</h3>
-          <p class="mt-2 text-sm text-slate-500">Generating 10 questions for your selected topic.</p>
+          <p class="mt-2 text-sm text-slate-500">Generating 5 questions based on your selected topic and related concepts.</p>
         </section>
         <section id="quiz-section" class="hidden space-y-5">
           <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600">AI Practice Quiz</p>
-                <h3 id="quiz-title" class="mt-1 text-xl font-bold">10-Question Practice Quiz</h3>
+                <h3 id="quiz-title" class="mt-1 text-xl font-bold">5-Question Practice Quiz</h3>
                 <p id="quiz-subtitle" class="mt-1 text-sm text-slate-500"></p>
               </div>
               <div class="rounded-xl bg-slate-50 px-4 py-3 text-center">
                 <p class="text-xs text-slate-500">Questions</p>
-                <p id="question-count" class="text-lg font-bold">10</p>
+                <p id="question-count" class="text-lg font-bold">5</p>
               </div>
             </div>
           </div>
@@ -335,7 +334,7 @@
               <div id="score-ring" class="score-ring grid h-36 w-36 place-items-center rounded-full">
                 <div class="grid h-28 w-28 place-items-center rounded-full bg-white">
                   <div>
-                    <p id="score-number" class="text-3xl font-black">0/10</p>
+                    <p id="score-number" class="text-3xl font-black">0/5</p>
                     <p class="text-center text-xs text-slate-500">Your Score</p>
                   </div>
                 </div>
@@ -377,8 +376,8 @@
     function showSection(id) { ["setup-section", "loading-section", "quiz-section", "result-section"].forEach(x => $(x).classList.add("hidden")); $(id).classList.remove("hidden"); window.scrollTo({ top: 0, behavior: "smooth" }); }
     function showError(m) { $("error-box").textContent = m; $("error-box").classList.remove("hidden"); }
     function hideError() { $("error-box").classList.add("hidden"); }
-    $("quiz-form").addEventListener("submit", async e => { e.preventDefault(); hideError(); if (!$("declaration").checked) { showError("Please confirm the Academic Integrity Declaration before generating the quiz."); return; } const subject = $("subject").value.trim(), topic = $("topic").value.trim(); const btn = $("generate-btn"); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Quiz...'; showSection("loading-section"); try { const r = await fetch(`${API_URL}/quiz/generate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject, topic }) }); const data = await r.json(); if (!r.ok) throw new Error(data.detail || "Unable to generate the quiz."); if (!data.quiz || !Array.isArray(data.quiz.questions) || data.quiz.questions.length !== 10) throw new Error("The AI returned an invalid quiz."); currentQuiz = data.quiz; currentQuizId = data.quiz_id; lastAnswers = {}; renderQuiz(); showSection("quiz-section"); } catch (err) { console.error(err); showSection("setup-section"); showError(err.message || "Sorry, the AI quiz is temporarily unavailable. Please try again."); } finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate My 10-Question Quiz'; } });
-    function renderQuiz() { $("quiz-title").textContent = currentQuiz.title || "10-Question Practice Quiz"; $("quiz-subtitle").textContent = `${currentQuiz.subject} • ${currentQuiz.topic}`; $("question-count").textContent = currentQuiz.questions.length; $("questions-form").innerHTML = currentQuiz.questions.map((q, i) => `<article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div class="flex gap-3"><div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-700">${i + 1}</div><div class="min-w-0 flex-1"><h4 class="text-sm font-bold leading-6 sm:text-base">${escapeHTML(q.question)}</h4><div class="mt-4 grid gap-3">${Object.entries(q.options).map(([k, v]) => `<label class="option cursor-pointer rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300"><input type="radio" name="q-${i}" value="${k}" class="sr-only quiz-option" data-q="${i}"><div class="flex gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-slate-300 text-xs font-bold">${k}</span><span class="text-sm leading-6 text-slate-700">${escapeHTML(v)}</span></div></label>`).join("")}</div></div></div></article>`).join(""); document.querySelectorAll(".quiz-option").forEach(input => input.addEventListener("change", function () { document.querySelectorAll(`input[data-q="${this.dataset.q}"]`).forEach(x => x.closest("label").classList.remove("selected")); this.closest("label").classList.add("selected"); })); }
+    $("quiz-form").addEventListener("submit", async e => { e.preventDefault(); hideError(); if (!$("declaration").checked) { showError("Please confirm the Academic Integrity Declaration before generating the quiz."); return; } const subject = $("subject").value.trim(), topic = $("topic").value.trim(); const btn = $("generate-btn"); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Quiz...'; showSection("loading-section"); try { const r = await fetch(`${API_URL}/quiz/generate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject, topic }) }); const data = await r.json(); if (!r.ok) throw new Error(data.detail || "Unable to generate the quiz."); if (!data.quiz || !Array.isArray(data.quiz.questions) || data.quiz.questions.length !== 5) throw new Error("The AI returned an invalid quiz. Please try again."); currentQuiz = data.quiz; currentQuizId = data.quiz_id; lastAnswers = {}; renderQuiz(); showSection("quiz-section"); } catch (err) { console.error(err); showSection("setup-section"); showError(err.message || "Sorry, the AI quiz is temporarily unavailable. Please try again."); } finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate My 5-Question Quiz'; } });
+    function renderQuiz() { $("quiz-title").textContent = currentQuiz.title || "5-Question Practice Quiz"; $("quiz-subtitle").textContent = `${currentQuiz.subject} • ${currentQuiz.topic}`; $("question-count").textContent = currentQuiz.questions.length; $("questions-form").innerHTML = currentQuiz.questions.map((q, i) => `<article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div class="flex gap-3"><div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-700">${i + 1}</div><div class="min-w-0 flex-1"><h4 class="text-sm font-bold leading-6 sm:text-base">${escapeHTML(q.question)}</h4><div class="mt-4 grid gap-3">${Object.entries(q.options).map(([k, v]) => `<label class="option cursor-pointer rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300"><input type="radio" name="q-${i}" value="${k}" class="sr-only quiz-option" data-q="${i}"><div class="flex gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-slate-300 text-xs font-bold">${k}</span><span class="text-sm leading-6 text-slate-700">${escapeHTML(v)}</span></div></label>`).join("")}</div></div></div></article>`).join(""); document.querySelectorAll(".quiz-option").forEach(input => input.addEventListener("change", function () { document.querySelectorAll(`input[data-q="${this.dataset.q}"]`).forEach(x => x.closest("label").classList.remove("selected")); this.closest("label").classList.add("selected"); })); }
     $("questions-form").addEventListener("submit", e => { e.preventDefault(); let answers = {}, missing = []; currentQuiz.questions.forEach((q, i) => { const x = document.querySelector(`input[name="q-${i}"]:checked`); if (x) answers[i] = x.value; else missing.push(i + 1); }); if (missing.length) { alert(`Please answer all questions before submitting.\n\nUnanswered: ${missing.join(", ")}`); return; } lastAnswers = answers; calculateResult(); });
     async function calculateResult() {
       const answers = {}; currentQuiz.questions.forEach((q, i) => { answers[i] = lastAnswers[i]; });
@@ -389,8 +388,8 @@
         currentResult = data;
         $("score-number").textContent = `${data.score}/${data.total}`;
         $("score-ring").style.setProperty("--score", `${data.percentage}%`);
-        let title = data.score >= 9 ? "Excellent work! 🔥" : data.score >= 7 ? "Good job! 💪" : data.score >= 5 ? "You are getting there. 📚" : "This topic needs more practice. 🎯";
-        let msg = data.score >= 9 ? "You have a strong understanding of this topic. Keep practicing without relying on AI." : data.score >= 7 ? "You understand most of the topic. Review the questions you missed and strengthen those areas." : data.score >= 5 ? "There are some gaps in your understanding. Review your notes and try the quiz again." : "Do not be discouraged. Study the fundamentals, solve problems yourself, and retake the quiz.";
+        let title = data.score === 5 ? "Excellent work! 🔥" : data.score >= 4 ? "Good job! 💪" : data.score >= 3 ? "You are getting there. 📚" : "This topic needs more practice. 🎯";
+        let msg = data.score === 5 ? "You have a strong understanding of this topic. Keep practicing without relying on AI." : data.score >= 4 ? "You understand most of the topic. Review the questions you missed and strengthen those areas." : data.score >= 3 ? "There are some gaps in your understanding. Review your notes and try the quiz again." : "Do not be discouraged. Study the fundamentals, solve problems yourself, and retake the quiz.";
         $("result-title").textContent = title; $("result-message").textContent = msg; renderReview(); showSection("result-section");
       } catch (err) { console.error(err); alert(err.message || "Unable to calculate the result."); }
     }

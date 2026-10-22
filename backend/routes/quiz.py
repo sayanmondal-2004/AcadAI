@@ -106,10 +106,10 @@ def submit_quiz(request: QuizSubmitRequest):
         for key, value in request.answers.items()
     }
 
-    if len(answers) != 10:
+    if len(answers) != len(quiz["questions"]):
         raise HTTPException(
             status_code=400,
-            detail="Please submit answers for all 10 questions."
+            detail=f"Please submit answers for all {len(quiz['questions'])} questions."
         )
 
     score = 0
@@ -135,8 +135,8 @@ def submit_quiz(request: QuizSubmitRequest):
     return {
         "success": True,
         "score": score,
-        "total": 10,
-        "percentage": score * 10,
+        "total": len(quiz["questions"]),
+        "percentage": round(score / len(quiz["questions"]) * 100),
         "subject": quiz["subject"],
         "topic": quiz["topic"],
         "review": review

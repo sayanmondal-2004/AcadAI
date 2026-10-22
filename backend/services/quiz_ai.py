@@ -20,10 +20,10 @@ def _extract_json(text: str):
 def generate_quiz(subject: str, topic: str) -> dict:
     system_prompt = """
 You are AcadAI, an academic quiz generator.
-Create a college-level practice quiz using ONLY the supplied subject and topic.
+Create a college-level practice quiz using the supplied subject and topic as the starting point. Do not restrict questions to only the exact wording or narrow boundaries of the topic: include relevant related concepts, prerequisite knowledge, applications, examples, and connected subtopics when useful. Keep the quiz academically relevant to the supplied subject/topic rather than introducing unrelated material.
 
 STRICT RULES:
-1. Generate EXACTLY 10 questions.
+1. Generate EXACTLY 5 questions.
 2. Every question is multiple-choice with EXACTLY 4 options.
 3. Option keys must be A, B, C, D.
 4. There must be exactly ONE correct answer.
@@ -36,7 +36,7 @@ STRICT RULES:
 
 Required format:
 {
-  "title": "10-Question Practice Quiz",
+  "title": "5-Question Practice Quiz",
   "subject": "subject",
   "topic": "topic",
   "questions": [
@@ -59,8 +59,8 @@ Required format:
         raise ValueError("AI quiz response must be a JSON object.")
 
     questions = data.get("questions")
-    if not isinstance(questions, list) or len(questions) != 10:
-        raise ValueError("AI must return exactly 10 questions.")
+    if not isinstance(questions, list) or len(questions) != 5:
+        raise ValueError("AI must return exactly 5 questions.")
 
     cleaned = []
     for index, item in enumerate(questions, 1):
@@ -94,7 +94,7 @@ Required format:
         })
 
     return {
-        "title": "10-Question Practice Quiz",
+        "title": "5-Question Practice Quiz",
         "subject": subject,
         "topic": topic,
         "questions": cleaned
