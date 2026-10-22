@@ -167,6 +167,13 @@ class UpdatePasswordRequest(BaseModel):
     current_password: str
     new_password: str
 
+
+class UpdateNameRequest(BaseModel):
+
+    student_id: str
+    current_password: str
+    full_name: str
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
@@ -505,6 +512,76 @@ def update_password(request: UpdatePasswordRequest):
             detail="Unable to update password. Please try again later."
         )
 
+    finally:
+        connection.close()
+
+
+# ============================================================
+# UPDATE NAME
+# ============================================================
+
+@router.post("/update-name")
+def update_name(request: UpdateNameRequest):
+    student_id = request.student_id.strip().upper()
+    current_password = request.current_password
+    full_name = " ".join(request.full_name.strip().split())
+
+    if not student_id:
+        raise HTTPException(status_code=400, detail="Student ID is required.")
+
+    if len(full_name) < 2 or len(full_name) > 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Name must contain between 2 and 100 characters."
+        )
+
+    if not current_password:
+        raise HTTPException(status_code=400, detail="Current password is required.")
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            "SELECT student_id, full_name, password_hash FROM users WHERE student_id = ?",
+            (student_id,)
+        )
+        user = cursor.fetchone()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="Student account not found.")
+
+        if not verify_password(current_password, user["password_hash"]):
+            raise HTTPException(status_code=400, detail="Current password is incorrect.")
+
+        cursor.execute(
+            "UPDATE users SET full_name = ? WHERE student_id = ?",
+            (full_name, student_id)
+        )
+
+        if cursor.rowcount != 1:
+            raise HTTPException(status_code=404, detail="Student account not found.")
+
+        connection.commit()
+        return {
+            "success": True,
+            "message": "Name updated successfully.",
+            "student_id": student_id,
+            "full_name": full_name
+        }
+
+    except HTTPException:
+        connection.rollback()
+        raise
+    except Exception as error:
+        connection.rollback()
+        print("UPDATE NAME ERROR:")
+        print(repr(error))
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to update name. Please try again later."
+        )
     finally:
         connection.close()
 

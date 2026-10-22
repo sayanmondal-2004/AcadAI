@@ -209,9 +209,9 @@
 
             <div class="mb-6 flex items-start justify-between">
                 <div>
-                    <h3 class="text-2xl font-bold text-slate-900">Update Password</h3>
-                    <p class="mt-2 text-sm leading-6 text-slate-500">
-                        Change your AcadAI account password.
+                    <h3 id="account-modal-title" class="text-2xl font-bold text-slate-900">Account Settings</h3>
+                    <p id="account-modal-description" class="mt-2 text-sm leading-6 text-slate-500">
+                        Update your password or the name on your account.
                     </p>
                 </div>
 
@@ -219,6 +219,17 @@
                         class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                         aria-label="Close">
                     <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+                <button type="button" id="password-tab" onclick="showAccountTab('password')"
+                        class="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-indigo-700 shadow-sm">
+                    <i class="fa-solid fa-key mr-1"></i> Update Password
+                </button>
+                <button type="button" id="name-tab" onclick="showAccountTab('name')"
+                        class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-700">
+                    <i class="fa-solid fa-user-pen mr-1"></i> Update Name
                 </button>
             </div>
 
@@ -294,6 +305,38 @@
                     ← Back to Login
                 </button>
             </form>
+
+            <form id="update-name-form" class="hidden space-y-5">
+                <div>
+                    <label for="update-name-student-id" class="mb-2 block text-sm font-semibold text-slate-700">Student ID</label>
+                    <input id="update-name-student-id" type="text" required placeholder="e.g. STU0001"
+                           class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                </div>
+                <div>
+                    <label for="update-name-current-password" class="mb-2 block text-sm font-semibold text-slate-700">Current Password (verification)</label>
+                    <div class="relative">
+                        <input id="update-name-current-password" type="password" required placeholder="Enter current password"
+                               class="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                        <button type="button" onclick="togglePassword('update-name-current-password', 'update-name-current-password-eye')"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" aria-label="Show current password">
+                            <i id="update-name-current-password-eye" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label for="update-full-name" class="mb-2 block text-sm font-semibold text-slate-700">New Full Name</label>
+                    <input id="update-full-name" type="text" required minlength="2" maxlength="100" autocomplete="name"
+                           placeholder="Enter your new full name"
+                           class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                </div>
+                <div id="update-name-message" class="hidden rounded-lg border p-3 text-sm" role="status" aria-live="polite"></div>
+                <button id="update-name-button" type="submit"
+                        class="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                    <i class="fa-solid fa-user-pen mr-2"></i> Update Name
+                </button>
+                <button type="button" onclick="closeUpdatePassword()"
+                        class="w-full text-sm font-semibold text-slate-500 hover:text-indigo-600">← Back to Login</button>
+            </form>
         </div>
     </div>
 
@@ -339,7 +382,12 @@
             document.getElementById("update-current-password").value = "";
             document.getElementById("update-new-password").value = "";
             document.getElementById("update-confirm-password").value = "";
+            document.getElementById("update-name-student-id").value = savedStudentId;
+            document.getElementById("update-name-current-password").value = "";
+            document.getElementById("update-full-name").value = "";
             clearUpdatePasswordMessage();
+            clearUpdateNameMessage();
+            showAccountTab("password");
 
             document.getElementById("update-student-id").focus();
         }
@@ -373,6 +421,47 @@
 
         function clearUpdatePasswordMessage() {
             const element = document.getElementById("update-password-message");
+            if (element) element.classList.add("hidden");
+        }
+
+        function showAccountTab(tab) {
+            const passwordForm = document.getElementById("update-password-form");
+            const nameForm = document.getElementById("update-name-form");
+            const passwordTab = document.getElementById("password-tab");
+            const nameTab = document.getElementById("name-tab");
+            const title = document.getElementById("account-modal-title");
+            const description = document.getElementById("account-modal-description");
+
+            const passwordActive = tab === "password";
+            passwordForm.classList.toggle("hidden", !passwordActive);
+            nameForm.classList.toggle("hidden", passwordActive);
+            passwordTab.className = passwordActive
+                ? "rounded-lg bg-white px-3 py-2 text-sm font-semibold text-indigo-700 shadow-sm"
+                : "rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-700";
+            nameTab.className = !passwordActive
+                ? "rounded-lg bg-white px-3 py-2 text-sm font-semibold text-indigo-700 shadow-sm"
+                : "rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-700";
+            title.textContent = passwordActive ? "Update Password" : "Update Name";
+            description.textContent = passwordActive
+                ? "Change your AcadAI account password."
+                : "Verify your current password before changing your account name.";
+            if (!passwordActive) document.getElementById("update-name-student-id").focus();
+        }
+
+        function showUpdateNameMessage(message, success = false) {
+            const element = document.getElementById("update-name-message");
+            element.textContent = message;
+            element.classList.remove(
+                "hidden", "border-red-200", "bg-red-50", "text-red-700",
+                "border-emerald-200", "bg-emerald-50", "text-emerald-700"
+            );
+            element.classList.add(...(success
+                ? ["border-emerald-200", "bg-emerald-50", "text-emerald-700"]
+                : ["border-red-200", "bg-red-50", "text-red-700"]));
+        }
+
+        function clearUpdateNameMessage() {
+            const element = document.getElementById("update-name-message");
             if (element) element.classList.add("hidden");
         }
 
@@ -518,6 +607,59 @@
                     button.disabled = false;
                     button.innerHTML =
                         '<i class="fa-solid fa-key mr-2"></i>Update Password';
+                }
+            });
+
+        document
+            .getElementById("update-name-form")
+            .addEventListener("submit", async function (event) {
+                event.preventDefault();
+                clearUpdateNameMessage();
+
+                const studentId = document.getElementById("update-name-student-id").value.trim().toUpperCase();
+                const currentPassword = document.getElementById("update-name-current-password").value;
+                const fullName = document.getElementById("update-full-name").value.trim().replace(/\s+/g, " ");
+                const button = document.getElementById("update-name-button");
+
+                if (!studentId || !currentPassword || !fullName) {
+                    showUpdateNameMessage("Complete all fields before continuing.");
+                    return;
+                }
+                if (fullName.length < 2 || fullName.length > 100) {
+                    showUpdateNameMessage("Name must contain between 2 and 100 characters.");
+                    return;
+                }
+
+                button.disabled = true;
+                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Updating...';
+                try {
+                    const response = await fetch(`${API_URL}/auth/update-name`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            student_id: studentId,
+                            current_password: currentPassword,
+                            full_name: fullName
+                        })
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.detail || data.error || "Unable to update name.");
+                    }
+
+                    // Keep the locally cached name in sync when this is the saved account.
+                    const savedStudentId = (localStorage.getItem("student_id") || "").trim().toUpperCase();
+                    if (savedStudentId === studentId) {
+                        localStorage.setItem("student_name", data.full_name || fullName);
+                    }
+                    showUpdateNameMessage("Name updated successfully. Your new name will appear after you sign in again.", true);
+                    document.getElementById("update-name-current-password").value = "";
+                    document.getElementById("update-full-name").value = data.full_name || fullName;
+                } catch (error) {
+                    showUpdateNameMessage(error.message || "Unable to update name.");
+                } finally {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fa-solid fa-user-pen mr-2"></i> Update Name';
                 }
             });
 
