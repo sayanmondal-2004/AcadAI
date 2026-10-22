@@ -212,13 +212,24 @@ def generate_with_openrouter(
             text_parts
         )
 
-    if (
-        not content
-        or not str(content).strip()
-    ):
-
+    if not content or not str(content).strip():
+        choice = choices[0] if choices else {}
+        message = choice.get("message", {}) or {}
+        usage = data.get("usage", {}) or {}
+        details = {
+            "model_requested": OPENROUTER_MODEL,
+            "model_used": data.get("model"),
+            "finish_reason": choice.get("finish_reason"),
+            "reasoning": message.get("reasoning"),
+            "usage": usage,
+            "provider_error": data.get("error"),
+        }
+        print("OpenRouter empty-response details:", details)
         raise RuntimeError(
-            "OpenRouter returned an empty response."
+            "OpenRouter returned no text. "
+            f"Model: {data.get('model', OPENROUTER_MODEL)}; "
+            f"finish_reason: {choice.get('finish_reason')}; "
+            f"usage: {usage}"
         )
 
     return str(
