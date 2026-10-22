@@ -156,32 +156,6 @@ Set New Password
 
 SMTP credentials are stored securely as environment variables.
 
-# System Architecture
-
-                    ┌──────────────────────┐
-                    │      Student         │
-                    │      Browser         │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │      Frontend        │
-                    │      HTML / CSS / JS │
-                    └──────────┬───────────┘
-                               │ REST API
-                               ▼
-                    ┌──────────────────────┐
-                    │      FastAPI         │
-                    │      Backend         │
-                    └──────────┬───────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-              ▼                ▼                ▼
-       ┌─────────────┐ ┌──────────────┐ ┌──────────────┐
-       │  Database   │ │   AI Service │ │ SMTP Service │
-       │ PostgreSQL  │ │ OpenRouter   │ │    Gmail     │
-       └─────────────┘ └──────────────┘ └──────────────┘
 # Technology Stack
 
 ### Frontend
@@ -216,41 +190,6 @@ SMTP credentials are stored securely as environment variables.
 - GitHub
 - Python Virtual Environment
 - REST APIs
-
-# Project Structure
-
-```AI-Academic-Advisor/
-│
-├── backend/
-│   ├── routes/
-│   │   ├── auth.py
-│   │   ├── feedback.py
-│   │   ├── notifications.py
-│   │   └── quiz.py
-│   │
-│   ├── services/
-│   │   ├── model_service.py
-│   │   └── quiz_ai.py
-│   │
-│   ├── main.py
-│   ├── database.py
-│   └── ...
-│
-├── frontend/
-│   ├── login.html
-│   ├── dashboard.html
-│   ├── attendance.html
-│   ├── study-plan.html
-│   ├── chatbot.html
-│   ├── quiz.html
-│   ├── recommendations.html
-│   └── ...
-│
-├── .env
-├── .gitignore
-├── requirements.txt
-└── README.md
-```
 
 # Environment Variables
 Create a .env file locally.
