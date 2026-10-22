@@ -5,16 +5,35 @@ from backend.services.model_service import generate_ai_response
 
 
 def _extract_json(text: str):
+    """Parse a JSON object, allowing surrounding Markdown fences or prose."""
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("AI returned an empty response.")
+
     text = text.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"\s*```$", "", text)
+    text = re.sub(r"^```(?:json)?\\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\\s*```$", "", text)
+
     try:
-        return json.loads(text)
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            return parsed
     except json.JSONDecodeError:
-        start, end = text.find("{"), text.rfind("}")
-        if start < 0 or end <= start:
-            raise ValueError("AI did not return valid JSON.")
-        return json.loads(text[start:end + 1])
+        pass
+
+    # Recover a JSON object if the provider adds text around it.
+    start = text.find("{")
+    if start >= 0:
+        try:
+            parsed, _ = json.JSONDecoder().raw_decode(text[start:])
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError(
+        "AI did not return a complete valid JSON object. The response may be "
+        "truncated or malformed. Check the model output-token limit and provider logs."
+    )
 
 
 def generate_quiz(subject: str, topic: str) -> dict:
@@ -51,8 +70,14 @@ Required format:
 }
 """
 
-    prompt = f"""SUBJECT:\n{subject}\n\nTOPIC:\n{topic}\n\nGenerate the quiz now using the required JSON format."""
-    raw = generate_ai_response(prompt=prompt, system_prompt=system_prompt)
+    prompt = f"""SUBJECT:\n{subject}\n\nTOPIC:\n{topic}\n\nGenerate the quiz now using the required JSON format. Return all 5 complete questions. Ensure the JSON is complete, with no text before or after it."""
+    # Five complete multiple-choice questions with explanations need more than
+    # the generic 300-token default.
+    raw = generate_ai_response(
+        prompt=prompt,
+        system_prompt=system_prompt,
+        max_tokens=2500
+    )
     data = _extract_json(raw)
 
     if not isinstance(data, dict):

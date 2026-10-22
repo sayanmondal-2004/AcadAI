@@ -60,18 +60,10 @@ def build_messages(
         system_prompt.strip()
     )
 
-    if combined_system_prompt:
-
-        combined_system_prompt += (
-            "\n\n" +
-            CONCISE_INSTRUCTION.strip()
-        )
-
-    else:
-
-        combined_system_prompt = (
-            CONCISE_INSTRUCTION.strip()
-        )
+    # Respect task-specific system prompts (e.g. strict JSON output). Appending
+    # generic prose instructions can conflict with structured-output requirements.
+    if not combined_system_prompt:
+        combined_system_prompt = CONCISE_INSTRUCTION.strip()
 
     messages.append({
         "role": "system",
