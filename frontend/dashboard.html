@@ -457,11 +457,40 @@
         ).textContent = student.current_semester;
 
 
-        document.getElementById(
-          "sidebar-student-name"
-        ).textContent =
-          student.name || "Student";
+        // Load the account's canonical name from the users table.
+        // The academic student endpoint may return academic-profile data
+        // without the registered full_name, so do not use student.name here.
+        let registeredName =
+          localStorage.getItem("student_name") || "";
 
+        try {
+          const profileResponse = await fetch(
+            `${API_URL}/auth/profile/${encodeURIComponent(STUDENT_ID)}`
+          );
+          if (profileResponse.ok) {
+            const profile = await profileResponse.json();
+            registeredName = String(profile.full_name || profile.name || profile.student_name || "").trim() || registeredName;
+            if (registeredName) {
+              localStorage.setItem("student_name", registeredName);
+            }
+          } else {
+            console.warn("Unable to load registered student name:", profileResponse.status);
+          }
+        } catch (profileError) {
+          console.warn("Unable to load registered student name:", profileError);
+        }
+
+        if (!registeredName || registeredName.toLowerCase() === "student") {
+          registeredName = "Student";
+        }
+
+        // This page has duplicate sidebar-student-name IDs in the desktop
+        // sidebar and footer. Update every matching element, plus mobile menu.
+        document.querySelectorAll("#sidebar-student-name").forEach((element) => {
+          element.textContent = registeredName;
+        });
+        const mobileStudentNameElement = document.getElementById("mobile-menu-student-name");
+        if (mobileStudentNameElement) mobileStudentNameElement.textContent = registeredName;
 
         document.getElementById(
           "sidebar-student-id"
@@ -1732,12 +1761,28 @@
       if (!response.ok) return;
       const student = await response.json();
 
+      // The registered name is stored in users.full_name and returned as
+      // full_name by /auth/profile/{student_id}; student.name may be absent.
+      let registeredName = localStorage.getItem("student_name") || "";
+      try {
+        const profileResponse = await fetch(
+          `${mobileApiUrl()}/auth/profile/${encodeURIComponent(sid)}`
+        );
+        if (profileResponse.ok) {
+          const profile = await profileResponse.json();
+          registeredName = String(profile.full_name || profile.name || profile.student_name || "").trim() || registeredName;
+          if (registeredName) localStorage.setItem("student_name", registeredName);
+        }
+      } catch (profileError) {
+        console.warn("Unable to load mobile profile name:", profileError);
+      }
+
       const setText = (id, value, fallback="--") => {
         const el = document.getElementById(id);
         if (el) el.textContent = value ?? fallback;
       };
 
-      setText("mobile-menu-student-name", student.name, "Student");
+      setText("mobile-menu-student-name", registeredName || student.name || "Student", "Student");
       setText("mobile-menu-student-id", student.student_id || sid, sid);
       setText("mobile-menu-semester", student.current_semester);
       setText("mobile-menu-year", student.academic_year);

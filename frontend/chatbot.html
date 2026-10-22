@@ -1222,7 +1222,16 @@
         if (el) el.textContent = value ?? fallback;
       };
 
-      setText("mobile-menu-student-name", student.name, "Student");
+      const returnedName = [student.full_name, student.name, student.student_name]
+        .find(value => typeof value === "string" && value.trim() &&
+          value.trim().toLowerCase() !== "student");
+      if (returnedName) {
+        setText("mobile-menu-student-name", returnedName.trim(), "Student");
+        localStorage.setItem("student_name", returnedName.trim());
+      } else {
+        const cachedName = localStorage.getItem("student_name");
+        if (cachedName) setText("mobile-menu-student-name", cachedName, "Student");
+      }
       setText("mobile-menu-student-id", student.student_id || sid, sid);
       setText("mobile-menu-semester", student.current_semester);
       setText("mobile-menu-year", student.academic_year);

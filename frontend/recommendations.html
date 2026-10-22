@@ -1063,7 +1063,7 @@
         if (el) el.textContent = value ?? fallback;
       };
 
-      setText("mobile-menu-student-name", student.name, "Student");
+      setText("mobile-menu-student-name", student.full_name || student.name || student.profile?.full_name || student.profile?.name, "Student");
       setText("mobile-menu-student-id", student.student_id || sid, sid);
       setText("mobile-menu-semester", student.current_semester);
       setText("mobile-menu-year", student.academic_year);
