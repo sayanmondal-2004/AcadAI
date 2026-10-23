@@ -75,7 +75,7 @@ Answer the user's actual question in natural language.
         response = str(generate_model_response(
             prompt=retry_prompt,
             system_prompt=SYSTEM_PROMPT,
-            max_tokens=1200
+            max_tokens=8000
         ) or "").strip()
 
     if not response:
