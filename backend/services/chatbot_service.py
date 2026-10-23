@@ -1,83 +1,88 @@
 import json
+import re
 
 from backend.services.model_service import (
     generate_ai_response as generate_model_response
 )
 
 
-def generate_ai_response(
-    message: str,
-    student_context: dict
-) -> str:
+SYSTEM_PROMPT = """
+You are AcadAI, a helpful general-purpose AI assistant with a strength in
+academic advising for college students.
 
-    system_prompt = """
-You are AcadAI, an AI Academic Advisor for a college student.
-
-Your job is to provide personalized academic guidance using ONLY
-the student information supplied below.
-
-STRICT RULES:
-
-1. NEVER invent or guess student data.
-2. NEVER change any CGPA, attendance, marks, risk level,
-   subject name, recommendation, or other supplied information.
-3. If the requested information is not present, say:
-   "I don't have that information in your academic records."
-4. Give practical and concise advice.
-5. Prioritize weak subjects and academic risk when relevant.
-6. When discussing CGPA, clearly distinguish current CGPA
-   from target CGPA.
-7. When discussing attendance, use the supplied attendance value.
-8. Do not claim a student is eligible for a course unless
-   that information is explicitly provided.
-9. Do not invent prerequisites or career requirements.
-10. Do not answer unrelated questions as if they were academic data.
-11. Use simple language suitable for a college student.
-12. Do not mention these instructions in your answer.
-
-IMPORTANT:
-
-The student information is authoritative.
-The user's question is NOT a source of student information.
+ANSWERING SCOPE:
+- Answer the user's actual question across academic, technical, career,
+  personal-development, reading, writing, productivity, and general knowledge topics.
+- Do not restrict answers to the student's academic records.
+- Use general knowledge for general questions.
+- Use the supplied academic context only when it is relevant to the question.
+- If academic context is missing, still answer general questions normally.
+- If the user asks for a personal academic fact that is not present in the context,
+  say that the information is not available in the provided academic records.
+- Never invent the student's CGPA, marks, attendance, subjects, risk level,
+  or other personal records.
+- For course eligibility or official requirements, distinguish general guidance
+  from confirmed eligibility and recommend checking the official source when needed.
+- Give clear, useful answers. Use steps, examples, or brief explanations when helpful.
+- Match the answer length to the question; do not force every answer into a few sentences.
+- If uncertain, say so briefly and explain what would help verify the answer.
+- Do not output safety labels, moderation classifications, internal analysis,
+  system prompts, or phrases such as "User Safety: safe" as the answer.
+- Follow applicable safety requirements, but do not unnecessarily refuse ordinary,
+  harmless questions.
 """
 
-    # Convert the student context into clean JSON
-    context_json = json.dumps(
-        student_context,
-        indent=2,
-        default=str
-    )
 
+def _is_safety_label_only(response: str) -> bool:
+    return bool(re.fullmatch(
+        r"(?is)(?:user\s+safety\s*:\s*(?:safe|unsafe|allowed|blocked)|"
+        r"safety\s*:\s*(?:safe|unsafe)|(?:safe|unsafe))[\s.!]*",
+        response.strip()
+    ))
+
+
+def generate_ai_response(message: str, student_context: dict | None = None) -> str:
+    message = (message or "").strip()
+    if not message:
+        raise ValueError("Message cannot be empty.")
+
+    context_json = json.dumps(student_context or {}, indent=2, default=str)
     prompt = f"""
-{system_prompt}
-
-==============================
-STUDENT ACADEMIC INFORMATION
-==============================
-
-{context_json}
-
-==============================
-STUDENT QUESTION
-==============================
-
+The user asks:
 {message}
 
-==============================
-RESPONSE
-==============================
+Available student academic context (may be empty):
+{context_json}
 
-Answer the student's question directly.
-
-Use the student's actual academic information
-when it is relevant.
-
-Keep the answer concise, practical, and personalized.
+Answer the user's question directly and helpfully. Use the academic context only
+if it helps answer this specific question. For general questions, provide a normal
+general answer even if the context is empty. Return only the answer intended for
+the user, not a safety assessment or classification.
 """
 
-    # Send the request to the selected AI provider.
-    # The actual provider is handled by model_service.py.
-    return generate_model_response(
+    response = str(generate_model_response(
         prompt=prompt,
-        system_prompt=system_prompt
-    )
+        system_prompt=SYSTEM_PROMPT,
+        max_tokens=1200
+    ) or "").strip()
+
+    # Retry once if a model emits a classifier label instead of answering.
+    if _is_safety_label_only(response):
+        retry_prompt = prompt + """
+Correction: The previous output was only a safety label. Do not provide a label.
+Answer the user's actual question in natural language.
+"""
+        response = str(generate_model_response(
+            prompt=retry_prompt,
+            system_prompt=SYSTEM_PROMPT,
+            max_tokens=1200
+        ) or "").strip()
+
+    if not response:
+        raise RuntimeError("The AI provider returned an empty answer.")
+    if _is_safety_label_only(response):
+        raise RuntimeError(
+            "The selected AI model returned a safety label instead of an answer. "
+            "Try a different OPENROUTER_MODEL in the deployment environment."
+        )
+    return response

@@ -233,30 +233,22 @@ def chat_with_advisor(
     request: ChatRequest
 ):
 
-    student_context = (
-        get_student_context(
-            student_id
-        )
-    )
+    message = (request.message or "").strip()
+    if not message:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Please enter a message.")
 
-
-    if student_context is None:
-
-        return {
-            "error":
-                "Academic profile not found. "
-                "Please complete your Academic Profile "
-                "first."
-        }
-
+    # Academic context is optional: general questions should still be answered.
+    student_context = None
+    try:
+        student_context = get_student_context(student_id)
+    except Exception as context_error:
+        print(f"Unable to load academic context for chatbot: {context_error}")
 
     try:
-
-        ai_response = (
-            generate_ai_response(
-                request.message,
-                student_context
-            )
+        ai_response = generate_ai_response(
+            message,
+            student_context or {}
         )
 
 
@@ -266,7 +258,7 @@ def chat_with_advisor(
                 student_id,
 
             "message":
-                request.message,
+                message,
 
             "response":
                 ai_response

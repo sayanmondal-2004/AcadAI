@@ -32,16 +32,10 @@ OPENROUTER_URL = (
 # ============================================================
 
 CONCISE_INSTRUCTION = """
-Answer concisely and directly.
-
-Rules:
-- Give only the information needed to answer the question.
-- Use 2-4 short sentences or short bullet points.
-- Do not repeat information.
-- Do not restate the user's question.
-- Do not add unnecessary background or explanations.
-- For simple factual questions, answer in 1-2 sentences.
-- Use the student's actual data when provided.
+Answer the user's actual question directly and helpfully.
+Use a length appropriate to the question; include steps or examples when useful.
+Do not output safety classifications or internal labels instead of an answer.
+Use supplied personal data only when relevant and never invent it.
 """
 
 
@@ -85,7 +79,7 @@ def build_messages(
 def generate_with_ollama(
     prompt: str,
     system_prompt: str = "",
-    max_tokens: int = 300
+    max_tokens: int = 1200
 ) -> str:
 
     import ollama
@@ -122,7 +116,7 @@ def generate_with_ollama(
 def generate_with_openrouter(
     prompt: str,
     system_prompt: str = "",
-    max_tokens: int = 300
+    max_tokens: int = 1200
 ) -> str:
 
     api_key = os.getenv(
@@ -244,7 +238,7 @@ def generate_with_openrouter(
 def generate_ai_response(
     prompt: str,
     system_prompt: str = "",
-    max_tokens: int = 300
+    max_tokens: int = 1200
 ) -> str:
 
     if AI_PROVIDER == "ollama":
