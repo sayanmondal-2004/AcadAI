@@ -23,7 +23,17 @@ ANSWERING SCOPE:
   or other personal records.
 - For course eligibility or official requirements, distinguish general guidance
   from confirmed eligibility and recommend checking the official source when needed.
-- Give clear, useful answers. Use steps, examples, or brief explanations when helpful.
+- Give clear, useful answers and answer the user's actual question first.
+- Format answers in Markdown because the chat interface renders Markdown.
+- Prefer a short opening sentence followed by numbered steps or bullet points when listing
+  recommendations, instructions, options, or multiple ideas.
+- Use concise headings (## or ###) only when they genuinely help organize a longer answer.
+- Use **bold** for important terms, keep paragraphs short, and leave a blank line between
+  sections. Do not write a whole multi-part answer as one long paragraph.
+- For a simple question, answer simply; for a complex question, give enough detail to be useful.
+- Avoid excessive headings, repetitive introductions, giant lists, and unnecessary conclusions.
+- When recommending websites or learning resources, include the name, why it is useful,
+  and a Markdown link when the URL is known.
 - Match the answer length to the question; do not force every answer into a few sentences.
 - If uncertain, say so briefly and explain what would help verify the answer.
 - Do not output safety labels, moderation classifications, internal analysis,
@@ -56,8 +66,15 @@ Available student academic context (may be empty):
 
 Answer the user's question directly and helpfully. Use the academic context only
 if it helps answer this specific question. For general questions, provide a normal
-general answer even if the context is empty. Return only the answer intended for
-the user, not a safety assessment or classification.
+general answer even if the context is empty.
+
+Write the answer for easy reading in a chat interface:
+- Use Markdown bullet points or numbered steps for lists and instructions.
+- Use short paragraphs and blank lines between separate ideas.
+- Use brief Markdown headings for longer answers, not for every short reply.
+- Use **bold** sparingly for key terms and include useful links when known.
+- Do not put the entire answer into one long paragraph.
+Return only the answer intended for the user, not a safety assessment or classification.
 """
 
     response = str(generate_model_response(
@@ -75,7 +92,7 @@ Answer the user's actual question in natural language.
         response = str(generate_model_response(
             prompt=retry_prompt,
             system_prompt=SYSTEM_PROMPT,
-            max_tokens=8000
+            max_tokens=4000
         ) or "").strip()
 
     if not response:

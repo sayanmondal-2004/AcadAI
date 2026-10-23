@@ -8,6 +8,9 @@
     <title>AcadAI Advisor — AI Chatbot</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Safe Markdown rendering for AI replies -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -25,6 +28,35 @@
   }
   .mobile-menu-item:active { background: rgba(255,255,255,.08); }
 }
+</style>
+
+
+<style id="acadai-chat-markdown-styles">
+  .chat-markdown { overflow-wrap: anywhere; font-size: .875rem; line-height: 1.7; }
+  .chat-markdown > :first-child { margin-top: 0; }
+  .chat-markdown > :last-child { margin-bottom: 0; }
+  .chat-markdown p { margin: .55rem 0; }
+  .chat-markdown h1, .chat-markdown h2, .chat-markdown h3 {
+    color: #0f172a; font-weight: 700; line-height: 1.35; margin: 1rem 0 .45rem;
+  }
+  .chat-markdown h1 { font-size: 1.15rem; }
+  .chat-markdown h2 { font-size: 1.05rem; }
+  .chat-markdown h3 { font-size: .95rem; }
+  .chat-markdown ul, .chat-markdown ol { margin: .5rem 0 .75rem; padding-left: 1.35rem; }
+  .chat-markdown ul { list-style: disc; }
+  .chat-markdown ol { list-style: decimal; }
+  .chat-markdown li { margin: .25rem 0; padding-left: .1rem; }
+  .chat-markdown li > p { margin: .2rem 0; }
+  .chat-markdown strong { color: #0f172a; font-weight: 700; }
+  .chat-markdown a { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; }
+  .chat-markdown blockquote { margin: .75rem 0; border-left: 3px solid #c7d2fe; padding-left: .75rem; color: #475569; }
+  .chat-markdown code { border-radius: .3rem; background: #e2e8f0; padding: .1rem .3rem; font-size: .82em; }
+  .chat-markdown pre { overflow-x: auto; margin: .65rem 0; border-radius: .6rem; background: #0f172a; color: #f8fafc; padding: .8rem; }
+  .chat-markdown pre code { background: transparent; color: inherit; padding: 0; }
+  .chat-markdown hr { margin: .8rem 0; border-color: #cbd5e1; }
+  .chat-markdown table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: .65rem 0; }
+  .chat-markdown th, .chat-markdown td { border: 1px solid #cbd5e1; padding: .4rem .55rem; text-align: left; }
+  .chat-markdown th { background: #e2e8f0; font-weight: 700; }
 </style>
 
 </head>
@@ -589,6 +621,27 @@
 
 
         /*
+         * Render assistant replies as safe, readable Markdown.
+         * User messages remain plain text and are HTML-escaped.
+         */
+        function renderAssistantMarkdown(value) {
+            const text = String(value ?? "");
+
+            if (window.marked && window.DOMPurify) {
+                const rendered = window.marked.parse(text, {
+                    gfm: true,
+                    breaks: true
+                });
+                return window.DOMPurify.sanitize(rendered, {
+                    USE_PROFILES: { html: true }
+                });
+            }
+
+            // Safe fallback if a CDN library fails to load.
+            return escapeHTML(text).replace(/\r?\n/g, "<br>");
+        }
+
+        /*
          * ADD MESSAGE
          */
 
@@ -655,16 +708,14 @@
 
 
             <div
-                class="max-w-xl rounded-2xl
+                class="min-w-0 max-w-3xl rounded-2xl
                 rounded-tl-none
                 bg-slate-100 px-4 py-3"
             >
 
-                <p
-                    class="text-sm leading-6"
-                >
-                    ${escapeHTML(message)}
-                </p>
+                <div class="chat-markdown">
+                    ${renderAssistantMarkdown(message)}
+                </div>
 
             </div>
 
