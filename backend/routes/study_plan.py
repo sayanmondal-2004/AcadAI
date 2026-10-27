@@ -3,7 +3,10 @@ import pandas as pd
 
 from backend.database import get_connection
 from backend.services.study_planner import generate_study_plan
-from backend.services.study_plan_ai import generate_ai_study_plan
+from backend.services.study_plan_ai import (
+    generate_ai_study_plan,
+    build_fallback_weekly_schedule,
+)
 
 
 router = APIRouter(
@@ -223,10 +226,8 @@ def get_study_plan(
     except Exception as e:
 
         ai_error = str(e)
-
-        ai_plan = (
-            "AI study-plan generation is currently unavailable."
-        )
+        # Keep the AI section useful even when the model provider fails.
+        ai_plan = build_fallback_weekly_schedule(plan, weekly_hours)
 
     # ========================================================
     # CALCULATE SUMMARY
@@ -320,7 +321,7 @@ def get_study_plan(
         "ai_study_plan": ai_plan,
     }
 
-    # Include AI error only when Ollama fails
+    # Include AI provider error for debugging when fallback is used
     if ai_error:
         response["ai_error"] = ai_error
 
